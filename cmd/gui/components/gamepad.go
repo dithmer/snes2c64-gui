@@ -9,6 +9,7 @@ import (
 	"snes2c64gui/pkg/controller"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
@@ -21,20 +22,20 @@ type GamepadMap struct {
 }
 
 var c64buttons = []string{
-	"btn_1",
-	"btn_2",
-	"btn_3",
-	"btn_a",
 	"joy_up",
 	"joy_down",
 	"joy_left",
 	"joy_right",
+	"btn_1",
+	"btn_2",
+	"btn_3",
+	"btn_a",
 }
 
 //go:embed assets/*
 var assets embed.FS
 
-func NewGamepadMap() *GamepadMap {
+func NewGamepadMap(keys []*canvas.Image) *GamepadMap {
 	keyCount := 10
 
 	gamepadMap := &GamepadMap{
@@ -44,6 +45,11 @@ func NewGamepadMap() *GamepadMap {
 
 	for i := 0; i < keyCount; i++ {
 		buttonsContainer := container.NewVBox()
+
+		// create icon from resource and add it to buttonsContainer
+		buttonsContainer.Add(keys[i])
+		buttonsContainer.Add(widget.NewSeparator())
+
 		for _, button := range c64buttons {
 			resource, _ := assets.Open(fmt.Sprintf("assets/c64_%s.svg.png", button))
 			b, err := io.ReadAll(resource)
@@ -77,7 +83,9 @@ func NewGamepadMap() *GamepadMap {
 func (m *GamepadMap) Enable() {
 	for _, number := range m.cols {
 		for _, button := range number.Objects {
-			button.(*widgets.IconPressSwitch).Enable()
+			if _, ok := button.(*widgets.IconPressSwitch); ok {
+				button.(*widgets.IconPressSwitch).Enable()
+			}
 		}
 	}
 }
@@ -85,16 +93,15 @@ func (m *GamepadMap) Enable() {
 func (m *GamepadMap) Disable() {
 	for _, number := range m.cols {
 		for _, button := range number.Objects {
-			button.(*widgets.IconPressSwitch).Disable()
+			if _, ok := button.(*widgets.IconPressSwitch); ok {
+				button.(*widgets.IconPressSwitch).Disable()
+			}
 		}
 	}
 }
 
 func (m *Gamepad) Enable() {
 	m.gamepadMapView.Enable()
-
-	radioGroup := m.Container.Objects[0].(*widget.RadioGroup)
-	radioGroup.Enable()
 }
 
 func (m *Gamepad) Disable() {
@@ -106,8 +113,13 @@ func (m *Gamepad) Disable() {
 
 func (m *GamepadMap) SetMap(gamepadMap controller.GamepadMap) {
 	for i, number := range gamepadMap {
-		for j := 0; j < 8; j++ {
-			m.cols[i].Objects[j].(*widgets.IconPressSwitch).SetActive(int(number)&pow2(j) != 0)
+		var j int
+		for _, button := range m.cols[i].Objects {
+			log.Printf("i: %d, j: %d, number: %d", i, j, number)
+			if _, ok := button.(*widgets.IconPressSwitch); ok {
+				button.(*widgets.IconPressSwitch).SetActive(int(number)&pow2(j) != 0)
+				j++
+			}
 		}
 	}
 }
@@ -116,9 +128,13 @@ func (m *GamepadMap) Map() controller.GamepadMap {
 	var gamepadMap controller.GamepadMap
 
 	for i, number := range m.cols {
-		for j, button := range number.Objects {
-			if button.(*widgets.IconPressSwitch).Active() {
-				gamepadMap[i] |= (uint8(pow2(j)))
+		var j int
+		for _, button := range number.Objects {
+			if _, ok := button.(*widgets.IconPressSwitch); ok {
+				if button.(*widgets.IconPressSwitch).Active() {
+					gamepadMap[i] |= (uint8(pow2(j)))
+				}
+				j++
 			}
 		}
 	}
@@ -143,14 +159,13 @@ type Gamepad struct {
 	GamepadMaps []controller.GamepadMap
 }
 
-func NewGamepad() *Gamepad {
+func NewGamepad(keys []*canvas.Image) *Gamepad {
 	mapCount := 8
 
-	gamepadMap := NewGamepadMap()
+	gamepadMap := NewGamepadMap(keys)
 
 	gamepad := &Gamepad{
 		container.NewVBox(
-			widget.NewRadioGroup([]string{}, func(string) {}),
 			gamepadMap.Container,
 		),
 		gamepadMap,
@@ -158,17 +173,6 @@ func NewGamepad() *Gamepad {
 		make([]controller.GamepadMap, mapCount),
 	}
 
-	var options []string
-	for i := 0; i < mapCount; i++ {
-		options = append(options, fmt.Sprintf("Map %d", i))
-	}
-
-	radioGroup := gamepad.Container.Objects[0].(*widget.RadioGroup)
-	radioGroup.Options = options
-	radioGroup.Horizontal = true
-	radioGroup.SetSelected("Map 0")
-	radioGroup.Disable()
-	radioGroup.OnChanged = gamepad.handleMapSelect()
 	return gamepad
 }
 
@@ -179,9 +183,6 @@ func (m *Gamepad) SetMaps(gamepadMaps []controller.GamepadMap) {
 func (m *Gamepad) SetSelectedMap(mapIndex int) {
 	m.selectedMap = mapIndex
 
-	radioGroup := m.Container.Objects[0].(*widget.RadioGroup)
-	radioGroup.SetSelected(fmt.Sprintf("Map %d", mapIndex))
-
 	m.gamepadMapView.SetMap(m.GamepadMaps[mapIndex])
 }
 
@@ -191,10 +192,4 @@ func (m *Gamepad) SelectedMap() int {
 
 func (m *Gamepad) Map() *GamepadMap {
 	return m.gamepadMapView
-}
-
-func (m *Gamepad) handleMapSelect() func(value string) {
-	return func(value string) {
-		m.SetSelectedMap(int(value[4]) - 48)
-	}
 }

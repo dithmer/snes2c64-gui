@@ -23,13 +23,17 @@ func NewConnectModal(parent fyne.Canvas, onConnect func(port string)) fyne.Canva
 		// TODO: Handle error in ui
 		panic(fmt.Sprintf("Error getting serial ports: %v", err))
 	}
-	portsList := widget.NewSelect(serialPorts, func(s string) {})
 
 	modal := widget.NewModalPopUp(nil, parent)
-	connect := widget.NewButton("Connect", func() {
-		modal.Hide()
-		onConnect(portsList.Selected)
-	})
+
+	portsGrid := container.NewGridWithColumns(3)
+	for i := range serialPorts {
+		portButton := widget.NewButton(serialPorts[i], func() {
+			modal.Hide()
+			onConnect(serialPorts[i])
+		})
+		portsGrid.Add(portButton)
+	}
 
 	open := widget.NewButton("Connect", func() {
 		modal.Show()
@@ -37,8 +41,7 @@ func NewConnectModal(parent fyne.Canvas, onConnect func(port string)) fyne.Canva
 
 	modal.Content = container.NewVBox(
 		widget.NewLabel("Select a serial port"),
-		portsList,
-		connect,
+		portsGrid,
 	)
 
 	return &ConnectModal{

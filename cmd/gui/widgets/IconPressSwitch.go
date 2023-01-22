@@ -139,7 +139,7 @@ func (r *iconPressSwitchRenderer) Layout(size fyne.Size) {
 }
 
 func (r *iconPressSwitchRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(60, 38)
+	return fyne.NewSize(100, 40)
 }
 
 func (r *iconPressSwitchRenderer) Objects() []fyne.CanvasObject {
