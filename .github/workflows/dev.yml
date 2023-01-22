@@ -23,7 +23,7 @@ jobs:
         with:
           name: cli-binary
           path: bin/
-  build_gui:
+  build_gui_linux:
     runs-on: ubuntu-latest
     container:
       image: golang:1.19-buster
@@ -42,9 +42,32 @@ jobs:
         with:
           name: gui-binary
           path: bin/
+  build_gui_windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Get dependencies
+        run: go get github.com/fyne-io/fyne-cross
+
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross
+
+      - name: Build
+        run: mkdir bin; fyne-cross windows -out gui ./cmd/gui; mv fyne-cross/bin/windows-amd64/gui bin/snes2c64-gui-windows-amd64
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: gui-binary
+          path: bin/snes2c64-gui-windows-amd64
   release:
     runs-on: ubuntu-latest
-    needs: [build_cli, build_gui]
+    needs: [build_cli, build_gui_linux, build_gui_windows]
     steps:
       - name: Download cli binary
         uses: actions/download-artifact@v3
@@ -65,3 +88,4 @@ jobs:
           files: |
             bin/snes2c64-cli-linux-amd64
             bin/snes2c64-gui-linux-amd64
+            bin/snes2c64-gui-windows-amd64
