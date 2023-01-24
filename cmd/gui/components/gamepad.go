@@ -115,7 +115,6 @@ func (m *GamepadMap) SetMap(gamepadMap controller.GamepadMap) {
 	for i, number := range gamepadMap {
 		var j int
 		for _, button := range m.cols[i].Objects {
-			log.Printf("i: %d, j: %d, number: %d", i, j, number)
 			if _, ok := button.(*widgets.IconPressSwitch); ok {
 				button.(*widgets.IconPressSwitch).SetActive(int(number)&pow2(j) != 0)
 				j++

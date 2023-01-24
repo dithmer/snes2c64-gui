@@ -2,7 +2,6 @@ package components
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -32,7 +31,6 @@ func NewLogs() *Logs {
 				return widget.NewLabel("")
 			},
 			func(i widget.ListItemID, o fyne.CanvasObject) {
-				log.Printf("i: %v, o: %v", i, o)
 				o.(*widget.Label).SetText(fmt.Sprintf("%s: %s", logs[i].timestamp.Format("15:04:05"), logs[i].message))
 			},
 		),
