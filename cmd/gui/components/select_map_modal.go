@@ -13,7 +13,7 @@ type SelectMapModal struct {
 
 	Modal *widget.PopUp
 
-	layers   []Map
+	maps     []Map
 	OnSelect func(layer Map)
 }
 
@@ -22,10 +22,10 @@ type Map struct {
 	Icon   fyne.Resource
 }
 
-func NewSelectMapModal(layers []Map, parent fyne.Canvas, onSelect func(layer Map)) *SelectMapModal {
+func NewSelectMapModal(maps []Map, parent fyne.Canvas, onSelect func(layer Map)) *SelectMapModal {
 	modal := widget.NewModalPopUp(nil, parent)
 
-	open := widget.NewButtonWithIcon("select map", layers[0].Icon, func() {
+	open := widget.NewButtonWithIcon(fmt.Sprintf("(current map %d) select map", maps[0].Number+1), maps[0].Icon, func() {
 		modal.Show()
 	})
 
@@ -35,7 +35,7 @@ func NewSelectMapModal(layers []Map, parent fyne.Canvas, onSelect func(layer Map
 	)
 
 	s := &SelectMapModal{
-		layers: layers,
+		maps:   maps,
 		Button: open,
 		Modal:  modal,
 	}
@@ -44,12 +44,13 @@ func NewSelectMapModal(layers []Map, parent fyne.Canvas, onSelect func(layer Map
 		return func() {
 			onSelect(layer)
 			open.SetIcon(layer.Icon)
+			open.SetText(fmt.Sprintf("(current map %d) select map", layer.Number+1))
 			modal.Hide()
 		}
 	}
 
-	for i := range layers {
-		layerButton := widget.NewButtonWithIcon(fmt.Sprintf("Map %d", layers[i].Number+1), layers[i].Icon, handleSelect(layers[i]))
+	for i := range maps {
+		layerButton := widget.NewButtonWithIcon(fmt.Sprintf("Map %d", maps[i].Number+1), maps[i].Icon, handleSelect(maps[i]))
 		modal.Content.(*fyne.Container).Objects[1].(*fyne.Container).Add(layerButton)
 	}
 
