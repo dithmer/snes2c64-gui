@@ -141,18 +141,16 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 }
 
 func (uv *UploadView) Draw(window fyne.Window) {
+	bottomButtonsGrid := container.New(layout.NewGridLayout(2), uv.SelectLayerModal.Button, uv.UploadButton)
+
 	window.SetContent(
 		container.NewHBox(
 			container.NewVBox(
-				container.NewHBox(
-					uv.ConnectModal.Button,
-					layout.NewSpacer(),
-					uv.SelectLayerModal.Button,
-				),
+				uv.ConnectModal.Button,
 				layout.NewSpacer(),
 				uv.Gamepad.Container,
 				layout.NewSpacer(),
-				uv.UploadButton,
+				bottomButtonsGrid,
 			),
 		),
 	)
