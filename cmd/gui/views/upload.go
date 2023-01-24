@@ -4,12 +4,14 @@ import (
 	"embed"
 	"fmt"
 	"io"
+	"log"
 
 	_ "embed"
 
 	fyne "fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"snes2c64gui/cmd/gui/components"
@@ -19,8 +21,7 @@ import (
 type UploadView struct {
 	Controller *controller.Controller
 
-	StatusBar *widget.Label
-	LogsView  *components.Logs
+	LogsView *components.Logs
 
 	ConnectModal     *components.ConnectModal
 	SelectLayerModal *components.SelectMapModal
@@ -60,8 +61,6 @@ var keyIconNames = []string{
 }
 
 func NewUploadView(window fyne.Window) (uv *UploadView) {
-	statusBar := widget.NewLabel("")
-
 	connectModal := components.NewConnectModal(window.Canvas(), func(port string) {
 		handleConnect(uv, uv.Controller, port)()
 	})
@@ -129,13 +128,10 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	logsView := components.NewLogs()
 
 	defer func() {
-		uv.SetStatus("Starting up")
-
 		uv.UploadButton.OnTapped = handleUpload(uv)
 	}()
 
 	return &UploadView{
-		StatusBar:        statusBar,
 		ConnectModal:     connectModal,
 		SelectLayerModal: selectLayerModal,
 		Gamepad:          gamepad,
@@ -145,25 +141,21 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 }
 
 func (uv *UploadView) Draw(window fyne.Window) {
-
 	window.SetContent(
 		container.NewHBox(
 			container.NewVBox(
 				container.NewHBox(
 					uv.ConnectModal.Button,
+					layout.NewSpacer(),
 					uv.SelectLayerModal.Button,
 				),
+				layout.NewSpacer(),
 				uv.Gamepad.Container,
+				layout.NewSpacer(),
 				uv.UploadButton,
 			),
-			uv.StatusBar,
 		),
 	)
-}
-
-func (uv *UploadView) SetStatus(status string) {
-	uv.StatusBar.SetText("Status: " + status)
-	uv.LogsView.Add(status)
 }
 
 func (uv *UploadView) EnableUpload() {
@@ -171,46 +163,33 @@ func (uv *UploadView) EnableUpload() {
 }
 
 func (uv *UploadView) Upload() {
-	uv.SetStatus("Uploading")
-
 	err := uv.Controller.Upload(uint8(uv.Gamepad.SelectedMap()), uv.Gamepad.Map().Map())
 	if err != nil {
-		uv.SetStatus(err.Error())
+		log.Fatalf("Error uploading: %v", err)
 		return
 	}
-
-	uv.SetStatus("Upload complete")
 }
 
 func (uv *UploadView) Download() {
-	uv.SetStatus("Downloading")
-
 	gamepadMaps, err := uv.Controller.Download()
 	if err != nil {
-		uv.SetStatus(err.Error())
+		log.Fatalf("Error downloading: %v", err)
 		return
 	}
 
 	uv.Gamepad.SetMaps(gamepadMaps)
-
-	uv.SetStatus("Download complete")
-
 }
 
 func handleConnect(uv *UploadView, c *controller.Controller, port string) func() {
 	return func() {
 		var err error
 
-		uv.SetStatus(fmt.Sprintf("Connecting to %s", port))
-
 		c, err := controller.NewController(port)
 		if err != nil {
-			uv.SetStatus(fmt.Sprintf("Error connecting to %s: %v", port, err))
+			log.Fatalf("Error connecting to %s: %v", port, err)
 			return
 		}
 		uv.Controller = c
-
-		uv.SetStatus("Connected")
 
 		uv.Download()
 
