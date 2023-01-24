@@ -5,48 +5,61 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"go.bug.st/serial"
 )
 
 type ConnectModal struct {
-	Button *widget.Button
-
-	Modal *widget.PopUp
-
+	Button    *widget.Button
+	Modal     *widget.PopUp
 	OnConnect func(port string)
+
+	serialPortButtonGrid *fyne.Container
 }
 
 func NewConnectModal(parent fyne.Canvas, onConnect func(port string)) *ConnectModal {
+	c := &ConnectModal{}
+
+	modal := widget.NewModalPopUp(nil, parent)
+	portsGrid := container.NewGridWithColumns(3)
+	open := widget.NewButton("Connect", func() {
+		c.RefreshPorts()
+		modal.Show()
+	})
+
+	modal.Content = container.NewVBox(
+		container.NewHBox(
+			widget.NewLabel("Select a serial port"),
+			widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {
+				c.RefreshPorts()
+			}),
+		),
+		portsGrid,
+	)
+
+	c.Button = open
+	c.Modal = modal
+	c.serialPortButtonGrid = portsGrid
+	c.OnConnect = onConnect
+
+	return c
+}
+
+func (c *ConnectModal) RefreshPorts() {
 	serialPorts, err := serial.GetPortsList()
 	if err != nil {
 		// TODO: Handle error in ui
 		panic(fmt.Sprintf("Error getting serial ports: %v", err))
 	}
 
-	modal := widget.NewModalPopUp(nil, parent)
+	c.serialPortButtonGrid.Objects = nil
 
-	portsGrid := container.NewGridWithColumns(3)
 	for i := range serialPorts {
 		portButton := widget.NewButton(serialPorts[i], func() {
-			modal.Hide()
-			onConnect(serialPorts[i])
+			c.Modal.Hide()
+			c.OnConnect(serialPorts[i])
 		})
-		portsGrid.Add(portButton)
+		c.serialPortButtonGrid.Add(portButton)
 	}
-
-	open := widget.NewButton("Connect", func() {
-		modal.Show()
-	})
-
-	modal.Content = container.NewVBox(
-		widget.NewLabel("Select a serial port"),
-		portsGrid,
-	)
-
-	return &ConnectModal{
-		Button: open,
-		Modal:  modal,
-	}
-
 }
