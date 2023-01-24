@@ -10,14 +10,14 @@ import (
 )
 
 type ConnectModal struct {
-	*widget.Button
+	Button *widget.Button
 
 	Modal *widget.PopUp
 
 	OnConnect func(port string)
 }
 
-func NewConnectModal(parent fyne.Canvas, onConnect func(port string)) fyne.CanvasObject {
+func NewConnectModal(parent fyne.Canvas, onConnect func(port string)) *ConnectModal {
 	serialPorts, err := serial.GetPortsList()
 	if err != nil {
 		// TODO: Handle error in ui

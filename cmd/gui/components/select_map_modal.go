@@ -9,7 +9,7 @@ import (
 )
 
 type SelectMapModal struct {
-	*widget.Button
+	Button *widget.Button
 
 	Modal *widget.PopUp
 
@@ -22,10 +22,10 @@ type Map struct {
 	Icon   fyne.Resource
 }
 
-func NewSelectMapModal(layers []Map, parent fyne.Canvas, onSelect func(layer Map)) fyne.CanvasObject {
+func NewSelectMapModal(layers []Map, parent fyne.Canvas, onSelect func(layer Map)) *SelectMapModal {
 	modal := widget.NewModalPopUp(nil, parent)
 
-	open := widget.NewButton("select map", func() {
+	open := widget.NewButtonWithIcon("select map", layers[0].Icon, func() {
 		modal.Show()
 	})
 
@@ -43,6 +43,7 @@ func NewSelectMapModal(layers []Map, parent fyne.Canvas, onSelect func(layer Map
 	handleSelect := func(layer Map) func() {
 		return func() {
 			onSelect(layer)
+			open.SetIcon(layer.Icon)
 			modal.Hide()
 		}
 	}

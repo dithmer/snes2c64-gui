@@ -22,11 +22,10 @@ type UploadView struct {
 	StatusBar *widget.Label
 	LogsView  *components.Logs
 
-	ConnectModalButton     fyne.CanvasObject
-	SelectLayerModalButton fyne.CanvasObject
-	CurrentMapLabel        *widget.Label
-	CurrentMapIcon         *widget.Icon
-	Gamepad                *components.Gamepad
+	ConnectModal     *components.ConnectModal
+	SelectLayerModal *components.SelectMapModal
+
+	Gamepad *components.Gamepad
 
 	selectedMap int
 
@@ -69,9 +68,6 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 
 	maps := make([]components.Map, len(selectMapModalMapIcons))
 
-	currentMapLabel := widget.NewLabel("Current map: 1")
-	currentMapIcon := widget.NewIcon(nil)
-
 	keysIcons := make([]*canvas.Image, 10)
 
 	for i, icon := range selectMapModalMapIcons {
@@ -90,10 +86,6 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 		}
 
 		staticResource := fyne.NewStaticResource(icon, b)
-
-		if i == 0 {
-			currentMapIcon.SetResource(staticResource)
-		}
 
 		maps[i] = components.Map{
 			Icon:   staticResource,
@@ -125,11 +117,9 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 
 	selectLayerModal := components.NewSelectMapModal(maps, window.Canvas(), func(layer components.Map) {
 		uv.Gamepad.SetSelectedMap(layer.Number)
-		uv.CurrentMapLabel.SetText(fmt.Sprintf("Current map: %d", layer.Number+1))
-		uv.CurrentMapIcon.SetResource(layer.Icon)
 		uv.selectedMap = layer.Number
 	})
-	selectLayerModal.(*components.SelectMapModal).Disable()
+	selectLayerModal.Button.Disable()
 
 	gamepad := components.NewGamepad(keysIcons)
 
@@ -145,14 +135,12 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	}()
 
 	return &UploadView{
-		StatusBar:              statusBar,
-		ConnectModalButton:     connectModal,
-		SelectLayerModalButton: selectLayerModal,
-		Gamepad:                gamepad,
-		LogsView:               logsView,
-		UploadButton:           uploadButton,
-		CurrentMapLabel:        currentMapLabel,
-		CurrentMapIcon:         currentMapIcon,
+		StatusBar:        statusBar,
+		ConnectModal:     connectModal,
+		SelectLayerModal: selectLayerModal,
+		Gamepad:          gamepad,
+		LogsView:         logsView,
+		UploadButton:     uploadButton,
 	}
 }
 
@@ -162,10 +150,8 @@ func (uv *UploadView) Draw(window fyne.Window) {
 		container.NewHBox(
 			container.NewVBox(
 				container.NewHBox(
-					uv.ConnectModalButton,
-					uv.SelectLayerModalButton,
-					uv.CurrentMapLabel,
-					uv.CurrentMapIcon,
+					uv.ConnectModal.Button,
+					uv.SelectLayerModal.Button,
 				),
 				uv.Gamepad.Container,
 				uv.UploadButton,
@@ -230,8 +216,8 @@ func handleConnect(uv *UploadView, c *controller.Controller, port string) func()
 
 		uv.Gamepad.SetSelectedMap(uv.selectedMap)
 		uv.Gamepad.Enable()
-		uv.SelectLayerModalButton.(*components.SelectMapModal).Enable()
-		uv.SelectLayerModalButton.(*components.SelectMapModal).Modal.Show()
+		uv.SelectLayerModal.Button.Enable()
+		uv.SelectLayerModal.Modal.Show()
 		uv.EnableUpload()
 	}
 }
