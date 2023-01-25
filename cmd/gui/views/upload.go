@@ -21,16 +21,12 @@ import (
 type UploadView struct {
 	Controller *controller.Controller
 
-	LogsView *components.Logs
-
-	ConnectModal     *components.ConnectModal
-	SelectLayerModal *components.SelectMapModal
+	ConnectModal *components.ConnectModal
 
 	GamepadMapView *components.GamepadMapView
 
-	selectedMap int
-
-	UploadButton *widget.Button
+	SelectLayerModal *components.SelectMapModal
+	UploadButton     *widget.Button
 }
 
 //go:embed assets/*
@@ -116,7 +112,6 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 
 	selectLayerModal := components.NewSelectMapModal(maps, window.Canvas(), func(layer components.Map) {
 		uv.GamepadMapView.SelectGamepadMap(layer.Number)
-		uv.selectedMap = layer.Number
 	})
 	selectLayerModal.Button.Disable()
 
@@ -127,18 +122,15 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	uploadButton := widget.NewButton("Upload", func() {})
 	uploadButton.Disable()
 
-	logsView := components.NewLogs()
-
 	defer func() {
 		uv.UploadButton.OnTapped = handleUpload(uv)
 	}()
 
 	return &UploadView{
 		ConnectModal:     connectModal,
-		SelectLayerModal: selectLayerModal,
 		GamepadMapView:   gamepad,
-		LogsView:         logsView,
 		UploadButton:     uploadButton,
+		SelectLayerModal: selectLayerModal,
 	}
 }
 
@@ -234,7 +226,7 @@ func handleConnect(uv *UploadView, c *controller.Controller, port string) func()
 		uv.GamepadMapView.InfoOverlay("Downloading gamepad maps...")
 		uv.Download()
 
-		uv.GamepadMapView.SelectGamepadMap(uv.selectedMap)
+		uv.GamepadMapView.SelectGamepadMap(uv.GamepadMapView.SelectedGamepadMap())
 		uv.GamepadMapView.Enable()
 		uv.GamepadMapView.HideOverlay()
 
