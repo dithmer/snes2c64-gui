@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io"
-	"log"
+	"time"
 
 	_ "embed"
 
@@ -26,7 +26,7 @@ type UploadView struct {
 	ConnectModal     *components.ConnectModal
 	SelectLayerModal *components.SelectMapModal
 
-	Gamepad *components.Gamepad
+	GamepadMapView *components.GamepadMapView
 
 	selectedMap int
 
@@ -115,12 +115,14 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	}
 
 	selectLayerModal := components.NewSelectMapModal(maps, window.Canvas(), func(layer components.Map) {
-		uv.Gamepad.SetSelectedMap(layer.Number)
+		uv.GamepadMapView.SelectGamepadMap(layer.Number)
 		uv.selectedMap = layer.Number
 	})
 	selectLayerModal.Button.Disable()
 
-	gamepad := components.NewGamepad(keysIcons)
+	gamepad := components.NewGamepadMap(keysIcons)
+	gamepad.InfoOverlay("Please connect the device to start")
+	gamepad.Disable()
 
 	uploadButton := widget.NewButton("Upload", func() {})
 	uploadButton.Disable()
@@ -134,7 +136,7 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	return &UploadView{
 		ConnectModal:     connectModal,
 		SelectLayerModal: selectLayerModal,
-		Gamepad:          gamepad,
+		GamepadMapView:   gamepad,
 		LogsView:         logsView,
 		UploadButton:     uploadButton,
 	}
@@ -148,7 +150,7 @@ func (uv *UploadView) Draw(window fyne.Window) {
 			container.NewVBox(
 				uv.ConnectModal.Button,
 				layout.NewSpacer(),
-				uv.Gamepad.Container,
+				uv.GamepadMapView.Container,
 				layout.NewSpacer(),
 				bottomButtonsGrid,
 			),
@@ -160,44 +162,88 @@ func (uv *UploadView) EnableUpload() {
 	uv.UploadButton.Enable()
 }
 
+func (uv *UploadView) Reset() {
+	uv.UploadButton.Disable()
+	uv.SelectLayerModal.Button.Disable()
+
+	uv.GamepadMapView.InfoOverlay("Please connect the device to start")
+	uv.GamepadMapView.Disable()
+
+	uv.ConnectModal.Button.Enable()
+	uv.ConnectModal.Button.SetText("Connect")
+}
+
 func (uv *UploadView) Upload() {
-	err := uv.Controller.Upload(uint8(uv.Gamepad.SelectedMap()), uv.Gamepad.Map().Map())
+	uv.GamepadMapView.InfoOverlay(fmt.Sprintf("Uploading map %d", uv.GamepadMapView.SelectedGamepadMap()+1))
+	err := uv.Controller.Upload(uint8(uv.GamepadMapView.SelectedGamepadMap()), uv.GamepadMapView.Map())
 	if err != nil {
-		log.Fatalf("Error uploading: %v", err)
+		uv.GamepadMapView.ErrorOverlay(fmt.Sprintf("Error uploading gamepad map %d: %v", uv.GamepadMapView.SelectedGamepadMap()+1, err))
+
+		go func() {
+			<-time.After(2 * time.Second)
+			uv.Reset()
+		}()
 		return
 	}
+
+	uv.GamepadMapView.InfoOverlay(fmt.Sprintf("Map %d uploaded", uv.GamepadMapView.SelectedGamepadMap()+1))
+	go func() {
+		<-time.After(1 * time.Second)
+		uv.GamepadMapView.HideOverlay()
+	}()
 }
 
 func (uv *UploadView) Download() {
 	gamepadMaps, err := uv.Controller.Download()
 	if err != nil {
-		log.Fatalf("Error downloading: %v", err)
+		uv.GamepadMapView.ErrorOverlay(fmt.Sprintf("Error downloading gamepad maps: %v", err))
+
+		go func() {
+			<-time.After(2 * time.Second)
+			uv.Reset()
+		}()
 		return
 	}
 
-	uv.Gamepad.SetMaps(gamepadMaps)
+	uv.GamepadMapView.SetGamepadMaps(gamepadMaps)
 }
 
 func handleConnect(uv *UploadView, c *controller.Controller, port string) func() {
 	return func() {
 		var err error
 
+		uv.GamepadMapView.InfoOverlay(fmt.Sprintf("Connecting to %s...", port))
+
+		if c != nil {
+			c.Close()
+		}
+
 		c, err := controller.NewController(port)
 		if err != nil {
-			log.Fatalf("Error connecting to %s: %v", port, err)
+			uv.GamepadMapView.Disable()
+			uv.GamepadMapView.ErrorOverlay(fmt.Sprintf("Error connecting to controller: %v", err))
+
+			go func() {
+				<-time.After(2 * time.Second)
+				uv.Reset()
+			}()
 			return
 		}
 		uv.Controller = c
 
+		uv.GamepadMapView.InfoOverlay("Downloading gamepad maps...")
 		uv.Download()
 
-		uv.Gamepad.SetSelectedMap(uv.selectedMap)
-		uv.Gamepad.Enable()
+		uv.GamepadMapView.SelectGamepadMap(uv.selectedMap)
+		uv.GamepadMapView.Enable()
+		uv.GamepadMapView.HideOverlay()
+
 		uv.SelectLayerModal.Button.Enable()
 		uv.SelectLayerModal.Modal.Show()
+
 		uv.EnableUpload()
+
 		uv.ConnectModal.Button.SetText(fmt.Sprintf("Connected to %s", port))
-		uv.ConnectModal.Button.Disable()
 	}
 }
 
