@@ -58,7 +58,7 @@ jobs:
         run: go install github.com/fyne-io/fyne-cross
 
       - name: Build
-        run: mkdir bin; fyne-cross windows -output gui ./cmd/gui; mv fyne-cross/bin/windows-amd64/gui bin/snes2c64-gui-windows-amd64
+        run: mkdir bin; fyne-cross windows -output gui ./cmd/gui; mv fyne-cross/bin/windows-amd64/gui bin/snes2c64-gui-windows-amd64.exe
 
       - name: Upload binary
         uses: actions/upload-artifact@v3
@@ -86,6 +86,4 @@ jobs:
           prerelease: true
           title: "Latest build on develop"
           files: |
-            bin/snes2c64-cli-linux-amd64
-            bin/snes2c64-gui-linux-amd64
-            bin/snes2c64-gui-windows-amd64
+            bin/*
