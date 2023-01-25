@@ -63,7 +63,7 @@ func NewGamepadMap(snesKeyImages []*canvas.Image) *GamepadMapView {
 			}
 
 			staticResource := fyne.NewStaticResource(fmt.Sprintf("c64_%s", button), b)
-			iconPressSwitch := widgets.NewIconPressSwitch(staticResource)
+			iconPressSwitch := widgets.NewIconPressSwitch(staticResource, 50, 50)
 
 			c64ButtonsContainer.Add(iconPressSwitch)
 		}
