@@ -110,6 +110,16 @@ func (m *GamepadMapView) InfoOverlay(text string) {
 	m.Container.Refresh()
 }
 
+func (m *GamepadMapView) ClearSelectedMap() {
+	for _, number := range m.getGamepadMapColContainers() {
+		c64ButtonsContainer := number.Objects[2].(*fyne.Container)
+
+		for _, button := range c64ButtonsContainer.Objects {
+			button.(*widgets.IconPressSwitch).SetActive(false)
+		}
+	}
+}
+
 func (m *GamepadMapView) ErrorOverlay(text string) {
 	overlayRect := m.Container.Objects[1].(*canvas.Rectangle)
 	overlayRect.Show()
