@@ -26,6 +26,7 @@ type UploadView struct {
 	GamepadMapView *components.GamepadMapView
 
 	SelectLayerModal *components.SelectMapModal
+	ClearMapButton   *widget.Button
 	UploadButton     *widget.Button
 }
 
@@ -114,6 +115,10 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 		uv.GamepadMapView.SelectGamepadMap(layer.Number)
 	})
 	selectLayerModal.Button.Disable()
+
+	clearMapButton := widget.NewButton("Clear Map", func() {
+		uv.GamepadMapView.ClearSelectedMap()
+	})
 
 	gamepad := components.NewGamepadMap(keysIcons)
 	gamepad.InfoOverlay("Please connect the device to start")
