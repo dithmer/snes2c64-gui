@@ -134,8 +134,9 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	return &UploadView{
 		ConnectModal:     connectModal,
 		GamepadMapView:   gamepad,
-		UploadButton:     uploadButton,
 		SelectLayerModal: selectLayerModal,
+		ClearMapButton:   clearMapButton,
+		UploadButton:     uploadButton,
 	}
 }
 
