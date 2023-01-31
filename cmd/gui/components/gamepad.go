@@ -20,7 +20,7 @@ type GamepadMapView struct {
 	Container *fyne.Container
 
 	selectedGamepadMap int
-	gamepadMaps        []controller.GamepadMap
+	GamepadMaps        []controller.GamepadMap
 }
 
 var c64buttons = []string{
@@ -120,6 +120,16 @@ func (m *GamepadMapView) ClearSelectedMap() {
 	}
 }
 
+func (m *GamepadMapView) IsEmpty(index int) bool {
+	for i := range m.GamepadMaps[index] {
+		if m.GamepadMaps[index][i] != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (m *GamepadMapView) ErrorOverlay(text string) {
 	overlayRect := m.Container.Objects[1].(*canvas.Rectangle)
 	overlayRect.Show()
@@ -181,7 +191,7 @@ func (m *GamepadMapView) Disable() {
 func (m *GamepadMapView) SelectGamepadMap(index int) {
 	m.selectedGamepadMap = index
 
-	gamepadMap := m.gamepadMaps[index]
+	gamepadMap := m.GamepadMaps[index]
 
 	for i, number := range gamepadMap {
 		c64ButtonsContainer := m.getGamepadMapColContainers()[i].Objects[2].(*fyne.Container)
@@ -217,7 +227,7 @@ func pow2(n int) int {
 }
 
 func (m *GamepadMapView) SetGamepadMaps(gamepadMaps []controller.GamepadMap) {
-	m.gamepadMaps = gamepadMaps
+	m.GamepadMaps = gamepadMaps
 
 }
 

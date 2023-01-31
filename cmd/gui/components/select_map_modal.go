@@ -13,13 +13,14 @@ type SelectMapModal struct {
 
 	Modal *widget.PopUp
 
-	maps     []Map
+	Maps     []Map
 	OnSelect func(layer Map)
 }
 
 type Map struct {
 	Number int
 	Icon   fyne.Resource
+	Empty  bool
 }
 
 func NewSelectMapModal(maps []Map, parent fyne.Canvas, onSelect func(layer Map)) *SelectMapModal {
@@ -35,24 +36,43 @@ func NewSelectMapModal(maps []Map, parent fyne.Canvas, onSelect func(layer Map))
 	)
 
 	s := &SelectMapModal{
-		maps:   maps,
+		Maps:   maps,
 		Button: open,
 		Modal:  modal,
 	}
 
+	s.OnSelect = onSelect
+
+	s.Refresh()
+
+	return s
+}
+
+func (s *SelectMapModal) Refresh() {
 	handleSelect := func(layer Map) func() {
 		return func() {
-			onSelect(layer)
-			open.SetIcon(layer.Icon)
-			open.SetText(fmt.Sprintf("(current map %d) select map", layer.Number+1))
-			modal.Hide()
+			s.OnSelect(layer)
+			s.Button.SetIcon(layer.Icon)
+			s.Button.SetText(fmt.Sprintf("(current map %d) select map", layer.Number+1))
+			s.Modal.Hide()
 		}
 	}
 
-	for i := range maps {
-		layerButton := widget.NewButtonWithIcon(fmt.Sprintf("Map %d", maps[i].Number+1), maps[i].Icon, handleSelect(maps[i]))
-		modal.Content.(*fyne.Container).Objects[1].(*fyne.Container).Add(layerButton)
-	}
+	s.Modal.Content.(*fyne.Container).Objects[1].(*fyne.Container).Objects = nil
 
-	return s
+	for i := range s.Maps {
+		var layerButton *widget.Button
+
+		if s.Maps[i].Empty {
+			layerButton = widget.NewButtonWithIcon(fmt.Sprintf("Map %d", s.Maps[i].Number+1), s.Maps[i].Icon, handleSelect(s.Maps[i]))
+		} else {
+			layerButton = widget.NewButtonWithIcon(fmt.Sprintf("Map %d (e)", s.Maps[i].Number+1), s.Maps[i].Icon, handleSelect(s.Maps[i]))
+		}
+		s.Modal.Content.(*fyne.Container).Objects[1].(*fyne.Container).Add(layerButton)
+	}
+}
+
+func (s *SelectMapModal) SetMaps(maps []Map) {
+	s.Maps = maps
+	s.Refresh()
 }
