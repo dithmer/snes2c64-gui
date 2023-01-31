@@ -19,6 +19,13 @@ func main() {
 	}
 	defer c.Close()
 
+	firmwareVersionString, err := c.GetFirmwareVersion()
+	if err != nil {
+		log.Fatalf("failed to get firmware version: %v", err)
+	}
+	fmt.Println(firmwareVersionString)
+	fmt.Println()
+
 	args := flag.Args()
 	if len(args) > 0 && args[0] == "u" {
 		uploadFlags := flag.NewFlagSet("u", flag.ExitOnError)

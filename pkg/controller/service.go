@@ -18,6 +18,9 @@ const (
 
 	UploadCmd     = "u"
 	UploadDoneMsg = "Done"
+
+	FirmwareVersionCmd         = "v"
+	FirmwareVersionCompleteMsg = "VERSION_END"
 )
 
 type GamepadMap [10]uint8
@@ -47,6 +50,19 @@ func (c *Controller) Close() error {
 	}
 
 	return nil
+}
+
+func (c *Controller) GetFirmwareVersion() (string, error) {
+	if _, err := c.port.Write([]byte("v")); err != nil {
+		return "", fmt.Errorf("failed to write to port: %w", err)
+	}
+
+	m, err := readUntil(c.port, FirmwareVersionCompleteMsg)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from port: %w", err)
+	}
+
+	return m[:len(m)-len(FirmwareVersionCompleteMsg)-3], nil
 }
 
 func (c *Controller) Download() (g []GamepadMap, err error) {
