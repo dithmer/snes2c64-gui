@@ -8,6 +8,7 @@ import (
 	"log"
 	"snes2c64gui/cmd/gui/widgets"
 	"snes2c64gui/pkg/controller"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -128,6 +129,21 @@ func (m *GamepadMapView) IsEmpty(index int) bool {
 	}
 
 	return false
+}
+
+func (m *GamepadMapView) GetCheatSheetURL() string {
+	var builder strings.Builder
+	for _, gamepadMap := range m.GamepadMaps {
+		// gamepadMap is an array of 10 uint8 values
+		// add them as hex values to the builder
+		for _, value := range gamepadMap {
+			builder.WriteString(fmt.Sprintf("%02x", value))
+		}
+	}
+
+	baseURL := "https://snes2c64sheet.shnbk.de/#"
+
+	return fmt.Sprintf("%s%s", baseURL, builder.String())
 }
 
 func (m *GamepadMapView) ErrorOverlay(text string) {

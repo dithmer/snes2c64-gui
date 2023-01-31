@@ -4,6 +4,8 @@ import (
 	"embed"
 	"fmt"
 	"io"
+	"os/exec"
+	"runtime"
 	"time"
 
 	_ "embed"
@@ -28,6 +30,8 @@ type UploadView struct {
 	SelectLayerModal *components.SelectMapModal
 	ClearMapButton   *widget.Button
 	UploadButton     *widget.Button
+
+	PrintCheatSheetButton *widget.Button
 }
 
 //go:embed assets/*
@@ -132,12 +136,42 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 		uv.UploadButton.OnTapped = handleUpload(uv)
 	}()
 
+	printCheatSheetButton := widget.NewButton("Print Cheat Sheet", func() {
+		printCheatSheet(uv)
+	})
+	printCheatSheetButton.Disable()
+
 	return &UploadView{
-		ConnectModal:     connectModal,
-		GamepadMapView:   gamepad,
-		SelectLayerModal: selectLayerModal,
-		ClearMapButton:   clearMapButton,
-		UploadButton:     uploadButton,
+		ConnectModal:          connectModal,
+		GamepadMapView:        gamepad,
+		SelectLayerModal:      selectLayerModal,
+		ClearMapButton:        clearMapButton,
+		UploadButton:          uploadButton,
+		PrintCheatSheetButton: printCheatSheetButton,
+	}
+}
+
+func printCheatSheet(uv *UploadView) {
+	var err error
+
+	url := uv.GamepadMapView.GetCheatSheetURL()
+
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		uv.GamepadMapView.ErrorOverlay(fmt.Sprintf("Error opening cheat sheet: %v", err))
+		go func() {
+			time.Sleep(2 * time.Second)
+			uv.GamepadMapView.HideOverlay()
+		}()
 	}
 }
 
@@ -152,6 +186,7 @@ func (uv *UploadView) Draw(window fyne.Window) {
 				uv.GamepadMapView.Container,
 				layout.NewSpacer(),
 				bottomButtonsGrid,
+				uv.PrintCheatSheetButton,
 			),
 		),
 	)
@@ -171,6 +206,8 @@ func (uv *UploadView) Reset() {
 
 	uv.ConnectModal.Button.Enable()
 	uv.ConnectModal.Button.SetText("Connect")
+
+	uv.PrintCheatSheetButton.Disable()
 }
 
 func (uv *UploadView) Upload() {
@@ -250,6 +287,8 @@ func handleConnect(uv *UploadView, c *controller.Controller, port string) func()
 		uv.ClearMapButton.Enable()
 
 		uv.EnableUpload()
+
+		uv.PrintCheatSheetButton.Enable()
 
 		uv.ConnectModal.Button.SetText(fmt.Sprintf("Connected to %s", port))
 	}
