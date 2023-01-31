@@ -119,6 +119,7 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	clearMapButton := widget.NewButton("Clear Map", func() {
 		uv.GamepadMapView.ClearSelectedMap()
 	})
+	clearMapButton.Disable()
 
 	gamepad := components.NewGamepadMap(keysIcons)
 	gamepad.InfoOverlay("Please connect the device to start")
@@ -141,7 +142,7 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 }
 
 func (uv *UploadView) Draw(window fyne.Window) {
-	bottomButtonsGrid := container.New(layout.NewGridLayout(2), uv.SelectLayerModal.Button, uv.UploadButton)
+	bottomButtonsGrid := container.New(layout.NewGridLayout(3), uv.SelectLayerModal.Button, uv.ClearMapButton, uv.UploadButton)
 
 	window.SetContent(
 		container.NewHBox(
@@ -163,6 +164,7 @@ func (uv *UploadView) EnableUpload() {
 func (uv *UploadView) Reset() {
 	uv.UploadButton.Disable()
 	uv.SelectLayerModal.Button.Disable()
+	uv.ClearMapButton.Disable()
 
 	uv.GamepadMapView.InfoOverlay("Please connect the device to start")
 	uv.GamepadMapView.Disable()
