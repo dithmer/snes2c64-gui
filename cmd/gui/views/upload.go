@@ -206,6 +206,12 @@ func (uv *UploadView) Download() {
 	}
 
 	uv.GamepadMapView.SetGamepadMaps(gamepadMaps)
+
+	maps := uv.SelectLayerModal.Maps
+	for i := range maps {
+		maps[i].Empty = uv.GamepadMapView.IsEmpty(i)
+	}
+	uv.SelectLayerModal.SetMaps(maps)
 }
 
 func handleConnect(uv *UploadView, c *controller.Controller, port string) func() {
