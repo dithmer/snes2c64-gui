@@ -48,25 +48,26 @@ func NewSelectMapModal(maps []Map, parent fyne.Canvas, onSelect func(layer Map))
 	return s
 }
 
-func (s *SelectMapModal) Refresh() {
-	handleSelect := func(layer Map) func() {
-		return func() {
-			s.OnSelect(layer)
-			s.Button.SetIcon(layer.Icon)
-			s.Button.SetText(fmt.Sprintf("(current map %d) select map", layer.Number+1))
-			s.Modal.Hide()
-		}
-	}
+func (s *SelectMapModal) HandleSelect(m Map) func() {
 
+	return func() {
+		s.OnSelect(m)
+		s.Button.SetIcon(m.Icon)
+		s.Button.SetText(fmt.Sprintf("(current map %d) select map", m.Number+1))
+		s.Modal.Hide()
+	}
+}
+
+func (s *SelectMapModal) Refresh() {
 	s.Modal.Content.(*fyne.Container).Objects[1].(*fyne.Container).Objects = nil
 
 	for i := range s.Maps {
 		var layerButton *widget.Button
 
 		if s.Maps[i].Empty {
-			layerButton = widget.NewButtonWithIcon(fmt.Sprintf("Map %d", s.Maps[i].Number+1), s.Maps[i].Icon, handleSelect(s.Maps[i]))
+			layerButton = widget.NewButtonWithIcon(fmt.Sprintf("Map %d", s.Maps[i].Number+1), s.Maps[i].Icon, s.HandleSelect(s.Maps[i]))
 		} else {
-			layerButton = widget.NewButtonWithIcon(fmt.Sprintf("Map %d (e)", s.Maps[i].Number+1), s.Maps[i].Icon, handleSelect(s.Maps[i]))
+			layerButton = widget.NewButtonWithIcon(fmt.Sprintf("Map %d (e)", s.Maps[i].Number+1), s.Maps[i].Icon, s.HandleSelect(s.Maps[i]))
 		}
 		s.Modal.Content.(*fyne.Container).Objects[1].(*fyne.Container).Add(layerButton)
 	}

@@ -13,6 +13,7 @@ import (
 	fyne "fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
@@ -66,6 +67,10 @@ var keyIconNames = []string{
 func NewUploadView(window fyne.Window) (uv *UploadView) {
 	connectModal := components.NewConnectModal(window.Canvas(), func(port string) {
 		handleConnect(uv, uv.Controller, port)()
+	})
+	window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyC, Modifier: fyne.KeyModifierAlt}, func(shortcut fyne.Shortcut) {
+		connectModal.RefreshPorts()
+		connectModal.Modal.Show()
 	})
 
 	maps := make([]components.Map, len(selectMapModalMapIcons))
@@ -121,11 +126,35 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 		uv.GamepadMapView.SelectGamepadMap(layer.Number)
 	})
 	selectLayerModal.Button.Disable()
+	shortcutKeys := []fyne.KeyName{
+		fyne.Key1,
+		fyne.Key2,
+		fyne.Key3,
+		fyne.Key4,
+		fyne.Key5,
+		fyne.Key6,
+		fyne.Key7,
+		fyne.Key8,
+	}
+	shortcutHandler := func(i int) func(fyne.Shortcut) {
+		return func(shortcut fyne.Shortcut) {
+			selectLayerModal.HandleSelect(maps[i])()
+		}
+	}
+	for i := 0; i < len(shortcutKeys); i++ {
+		window.Canvas().AddShortcut(&desktop.CustomShortcut{
+			KeyName:  shortcutKeys[i],
+			Modifier: fyne.KeyModifierAlt,
+		}, shortcutHandler(i))
+	}
 
 	clearMapButton := widget.NewButton("Clear Map", func() {
 		uv.GamepadMapView.ClearSelectedMap()
 	})
 	clearMapButton.Disable()
+	window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyX, Modifier: fyne.KeyModifierAlt}, func(shortcut fyne.Shortcut) {
+		uv.GamepadMapView.ClearSelectedMap()
+	})
 
 	gamepad := components.NewGamepadMap(keysIcons)
 	gamepad.InfoOverlay("Please connect the device to start")
@@ -133,15 +162,20 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 
 	uploadButton := widget.NewButton("Upload", func() {})
 	uploadButton.Disable()
-
 	defer func() {
 		uv.UploadButton.OnTapped = handleUpload(uv)
 	}()
+	window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyU, Modifier: fyne.KeyModifierAlt}, func(shortcut fyne.Shortcut) {
+		handleUpload(uv)()
+	})
 
 	printCheatSheetButton := widget.NewButton("Print Cheat Sheet", func() {
 		printCheatSheet(uv)
 	})
 	printCheatSheetButton.Disable()
+	window.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyP, Modifier: fyne.KeyModifierAlt}, func(shortcut fyne.Shortcut) {
+		printCheatSheet(uv)
+	})
 
 	versionLabel := widget.NewLabel("")
 
@@ -181,6 +215,7 @@ func printCheatSheet(uv *UploadView) {
 }
 
 func (uv *UploadView) Draw(window fyne.Window) {
+
 	bottomButtonsGrid := container.New(layout.NewGridLayout(3), uv.SelectLayerModal.Button, uv.ClearMapButton, uv.UploadButton)
 
 	window.SetContent(
