@@ -123,7 +123,7 @@ func (m *GamepadMapView) ClearSelectedMap() {
 
 func (m *GamepadMapView) IsEmpty(index int) bool {
 	for i := range m.GamepadMaps[index] {
-		if m.GamepadMaps[index][i] != 0 {
+		if m.GamepadMaps[index][i] != 0 && m.GamepadMaps[index][i] != 128 {
 			return true
 		}
 	}
