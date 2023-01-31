@@ -32,6 +32,8 @@ type UploadView struct {
 	UploadButton     *widget.Button
 
 	PrintCheatSheetButton *widget.Button
+
+	VersionLabel *widget.Label
 }
 
 //go:embed assets/*
@@ -141,6 +143,8 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 	})
 	printCheatSheetButton.Disable()
 
+	versionLabel := widget.NewLabel("")
+
 	return &UploadView{
 		ConnectModal:          connectModal,
 		GamepadMapView:        gamepad,
@@ -148,6 +152,7 @@ func NewUploadView(window fyne.Window) (uv *UploadView) {
 		ClearMapButton:        clearMapButton,
 		UploadButton:          uploadButton,
 		PrintCheatSheetButton: printCheatSheetButton,
+		VersionLabel:          versionLabel,
 	}
 }
 
@@ -187,6 +192,10 @@ func (uv *UploadView) Draw(window fyne.Window) {
 				layout.NewSpacer(),
 				bottomButtonsGrid,
 				uv.PrintCheatSheetButton,
+				container.NewHBox(
+					layout.NewSpacer(),
+					uv.VersionLabel,
+				),
 			),
 		),
 	)
@@ -291,6 +300,20 @@ func handleConnect(uv *UploadView, c *controller.Controller, port string) func()
 		uv.PrintCheatSheetButton.Enable()
 
 		uv.ConnectModal.Button.SetText(fmt.Sprintf("Connected to %s", port))
+
+		firmwareVersion, err := uv.Controller.GetFirmwareVersion()
+		if err != nil {
+			uv.GamepadMapView.ErrorOverlay(fmt.Sprintf("Error getting firmware version: %v", err))
+
+			go func() {
+				<-time.After(2 * time.Second)
+				uv.Reset()
+			}()
+
+			return
+		}
+
+		uv.VersionLabel.SetText(firmwareVersion)
 	}
 }
 
