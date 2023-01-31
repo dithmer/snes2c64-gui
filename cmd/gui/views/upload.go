@@ -241,6 +241,8 @@ func handleConnect(uv *UploadView, c *controller.Controller, port string) func()
 		uv.SelectLayerModal.Button.Enable()
 		uv.SelectLayerModal.Modal.Show()
 
+		uv.ClearMapButton.Enable()
+
 		uv.EnableUpload()
 
 		uv.ConnectModal.Button.SetText(fmt.Sprintf("Connected to %s", port))
