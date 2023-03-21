@@ -6,6 +6,7 @@ import (
 	"io"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	_ "embed"
@@ -348,7 +349,7 @@ func handleConnect(uv *UploadView, c *controller.Controller, port string) func()
 			return
 		}
 
-		uv.VersionLabel.SetText(firmwareVersion)
+		uv.VersionLabel.SetText(strings.ReplaceAll(firmwareVersion, "\n", " "))
 	}
 }
 
