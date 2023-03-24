@@ -2,7 +2,7 @@ name: Development Builds
 
 on:
   push:
-    branches: ["develop"]
+    branches: [ "develop" ]
 
 jobs:
   build_cli:
@@ -65,9 +65,38 @@ jobs:
         with:
           name: gui-binary
           path: bin/snes2c64-gui-windows-amd64.exe
+  build_gui_mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Get dependencies
+        run: go get github.com/fyne-io/fyne-cross
+
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross
+
+      - name: Build
+        run: mkdir bin; fyne-cross darwin -output gui ./cmd/gui; mv fyne-cross/bin/darwin-amd64/gui bin/snes2c64-gui-darwin-amd64.dmg
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: gui-binary
+          path: bin/snes2c64-gui-darwin-amd64.dmg
   release:
     runs-on: ubuntu-latest
-    needs: [build_cli, build_gui_linux, build_gui_windows]
+    needs:
+      [
+        build_cli,
+        build_gui_linux,
+        build_gui_windows,
+        build_gui_mac
+      ]
     steps:
       - name: Download cli binary
         uses: actions/download-artifact@v3
