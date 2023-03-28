@@ -56,9 +56,11 @@ func (c *ConnectModal) RefreshPorts() {
 	c.serialPortButtonGrid.Objects = nil
 
 	for i := range serialPorts {
-		portButton := widget.NewButton(serialPorts[i], func() {
+		port := serialPorts[i]
+
+		portButton := widget.NewButton(port, func() {
 			c.Modal.Hide()
-			c.OnConnect(serialPorts[i])
+			c.OnConnect(port)
 		})
 		c.serialPortButtonGrid.Add(portButton)
 	}
