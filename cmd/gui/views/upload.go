@@ -59,7 +59,7 @@ var keyIconNames = []string{
 	"dpad_right",
 	"snes_button_b-full",
 	"snes_button_a-full",
-  "snes_button_y-full",
+	"snes_button_y-full",
 	"snes_button_x-full",
 	"snes_shoulder_l",
 	"snes_shoulder_R",
